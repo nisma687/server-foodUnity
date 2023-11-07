@@ -8,14 +8,19 @@ const jwt=require('jsonwebtoken');
 
 // middleware
 
-app.use(cors());
+app.use(cors(
+  {
+    origin:['http://localhost:5173'],
+  credentials:true
+  }
+));
 app.use(express.json());
 // database connection(mongodb)
 require('dotenv').config();
 console.log(process.env.DB_USER);
 console.log(process.env.DB_PASS);
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.231nuf3.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -34,7 +39,22 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+    const featuredFood=client.db("featureddB").collection("foods");
+    app.get('/featured',async(req,res)=>{
+      const cursor=featuredFood.find();
+      const foods=await cursor.toArray();
+      res.send(foods);
+
+    })
+    app.get('/featured/:id',async(req,res)=>{
+      const id=req.params.id;
+      const food=await featuredFood.findOne({_id:new ObjectId(id)});
+      console.log(food);
+      res.send(food);
+    })
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
