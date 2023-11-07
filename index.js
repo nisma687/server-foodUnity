@@ -55,6 +55,14 @@ async function run() {
       console.log(food);
       res.send(food);
     })
+    app.post('/addfood',async(req,res)=>{
+      const food=req.body;
+      console.log('adding new food',food);
+      const result=await featuredFood.insertOne(food);
+      console.log(result);
+      res.json(result);
+    })
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
