@@ -92,7 +92,13 @@ async function run() {
       res.send(food);
     })
     
-
+    app.delete('/requestfood/:id',async (req,res)=>{
+      const id=req.params.id;
+      const query={_id:new ObjectId(id)};
+      const result=await requestFood.deleteOne(query);
+      console.log(result);
+      res.json(result);
+    })
     
 
 app.get('/search/:search', async (req, res) => {
