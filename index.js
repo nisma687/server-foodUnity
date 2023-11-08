@@ -72,11 +72,26 @@ async function run() {
     
     })
     app.get('/requestfood',async(req,res)=>{
-      const cursor=requestFood.find();
+
+      console.log(req.query.donorName);
+      let query={};
+      if(req.query?.donorName){
+        query.donorName=req.query.donorName;
+        
+      }
+      const cursor=requestFood.find(query);
       const foods=await cursor.toArray();
+      console.log(foods);
       res.send(foods);
 
     })
+    app.get('/requestfood/:id',async(req,res)=>{
+      const id=req.params.id;
+      const food=await requestFood.findOne({_id:new ObjectId(id)});
+      console.log(food);
+      res.send(food);
+    })
+    
 
     
 
