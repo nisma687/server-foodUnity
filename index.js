@@ -43,6 +43,7 @@ async function run() {
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     const featuredFood=client.db("featureddB").collection("foods");
+    const requestFood=client.db("featureddB").collection("requestfood");
     app.get('/featured',async(req,res)=>{
       const cursor=featuredFood.find();
       const foods=await cursor.toArray();
@@ -62,6 +63,42 @@ async function run() {
       console.log(result);
       res.json(result);
     })
+    app.post('/requestfood',async(req,res)=>{
+      const food=req.body;
+      console.log('adding new food',food);
+      const result=await requestFood.insertOne(food);
+      console.log(result);
+      res.json(result);
+    
+    })
+    app.get('/requestfood',async(req,res)=>{
+      const cursor=requestFood.find();
+      const foods=await cursor.toArray();
+      res.send(foods);
+
+    })
+
+    
+
+app.get('/search/:search', async (req, res) => {
+    const search = req.params.search.trim(); // Trim the search term
+    console.log('Search term:', search); // Log the search term for debugging
+
+    try {
+        const escapeStringRegexp = (await import('escape-string-regexp')).default; // Use dynamic import for ESM module
+        const escapedSearch = escapeStringRegexp(search); // Escape special characters in the search term
+
+        const cursor = featuredFood.find({ name: { $regex: escapedSearch, $options: 'i' } }); // Perform case-insensitive regex search
+        const results = await cursor.toArray(); // Convert cursor to array
+
+        res.send(results); // Send the search results to the client
+    } catch (error) {
+        console.error('Error occurred during search:', error);
+        res.status(500).send('An error occurred during search.'); // Handle errors and send a 500 internal server error response
+    }
+});
+
+
 
   } finally {
     // Ensures that the client will close when you finish/error
