@@ -44,6 +44,19 @@ async function run() {
 
     const featuredFood=client.db("featureddB").collection("foods");
     const requestFood=client.db("featureddB").collection("requestfood");
+    const fivedb=client.db("featureddB").collection("fivedb");
+    app.get('/fivedb',async(req,res)=>{
+      const cursor=fivedb.find();
+      const foods=await cursor.toArray();
+      res.send(foods);
+
+    })
+    app.get('/fivedb/:id',async(req,res)=>{
+      const id=req.params.id;
+      const food=await fivedb.findOne({_id:new ObjectId(id)});
+      console.log(food);
+      res.send(food);
+    })
     app.get('/featured',async(req,res)=>{
       const cursor=featuredFood.find();
       const foods=await cursor.toArray();
@@ -56,7 +69,19 @@ async function run() {
       console.log(food);
       res.send(food);
     })
-    app.post('/addfood',async(req,res)=>{
+    app.patch('/featured/:id',async(req,res)=>{
+      const id=req.params.id;
+      const food=req.body;
+      console.log('updating food',id,food);
+      const query={_id:new ObjectId(id)};
+      const newValues={
+        $set:food,
+      };
+      const result=await featuredFood.updateOne(query,newValues);
+      console.log(result);
+      res.json(result);
+    })
+    app.post('/featured',async(req,res)=>{
       const food=req.body;
       console.log('adding new food',food);
       const result=await featuredFood.insertOne(food);
@@ -70,6 +95,13 @@ async function run() {
       console.log(result);
       res.json(result);
     
+    })
+    app.delete('/featured/:id',async (req,res)=>{
+      const id=req.params.id;
+      const query={_id:new ObjectId(id)};
+      const result=await featuredFood.deleteOne(query);
+      console.log(result);
+      res.json(result);
     })
     app.get('/requestfood',async(req,res)=>{
 
