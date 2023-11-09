@@ -3,7 +3,7 @@ const app=express();
 const port=process.env.PORT ||5000;
 const cors=require('cors');
 const jwt=require('jsonwebtoken');
-
+const cookieParser=require ('cookie-parser');
 
 
 // middleware
@@ -14,6 +14,7 @@ app.use(cors(
   credentials:true
   }
 ));
+app.use(cookieParser());
 app.use(express.json());
 // database connection(mongodb)
 require('dotenv').config();
@@ -31,7 +32,27 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
+const verifyToken=async(req,res,next)=>{
+  const token=req.cookies.token;
+  console.log(token);
+  if(!token){
+    res.status(401).send({error:'unauthorized user',
+    success:false,message:'unauthorized user'
+    });
+  }
+  jwt.verify(token,process.env.JWT_SECRET,(err,decoded)=>{
+    if(err){
+      console.log(err);
+      res.status(401).send({error:'unauthorized user',
+    success:false,message:'unauthorized user'
+    });
+    }
+    console.log('decoded',decoded);
+    req.user=decoded;
+    next();
+  })
+  
+}
 
 async function run() {
   try {
@@ -45,12 +66,40 @@ async function run() {
     const featuredFood=client.db("featureddB").collection("foods");
     const requestFood=client.db("featureddB").collection("requestfood");
     const fivedb=client.db("featureddB").collection("fivedb");
+    const events=client.db("featureddB").collection("events");
     app.get('/fivedb',async(req,res)=>{
       const cursor=fivedb.find();
       const foods=await cursor.toArray();
       res.send(foods);
 
     })
+    app.get('/events',async(req,res)=>{
+      const cursor=events.find();
+      const foods=await cursor.toArray();
+      res.send(foods);
+
+    })
+    // jwt (json web token setup)
+    app.post('/jwt',async(req,res)=>{
+      const user=req.body;
+      console.log(user);
+      const token=jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'1h'});
+      console.log(token);
+      // for checking token
+      // res.send({token});
+      res.cookie('token',
+      token,{httpOnly:true,secure:true,sameSite:'none'})
+      .send({success:true});
+    })
+    app.post('/logout',(req,res)=>{
+      const user=req.body;
+      console.log(user);
+      res.clearCookie('token',{maxAge:0})
+      .send({success:true});
+    })
+    
+
+
     app.get('/fivedb/:id',async(req,res)=>{
       const id=req.params.id;
       const food=await fivedb.findOne({_id:new ObjectId(id)});
@@ -63,7 +112,9 @@ async function run() {
       res.send(foods);
 
     })
-    app.get('/featured/:id',async(req,res)=>{
+    app.get('/featured/:id',verifyToken,async(req,res)=>{
+     
+      // console.log(req.params)
       const id=req.params.id;
       const food=await featuredFood.findOne({_id:new ObjectId(id)});
       console.log(food);
@@ -71,6 +122,7 @@ async function run() {
     })
     app.patch('/featured/:id',async(req,res)=>{
       const id=req.params.id;
+      
       const food=req.body;
       console.log('updating food',id,food);
       const query={_id:new ObjectId(id)};
@@ -103,8 +155,9 @@ async function run() {
       console.log(result);
       res.json(result);
     })
-    app.get('/requestfood',async(req,res)=>{
-
+    app.get('/requestfood',verifyToken,async(req,res)=>{
+      console.log(req.user);
+      // console.log(req.query);
       console.log(req.query.donorName);
       let query={};
       if(req.query?.donorName){
