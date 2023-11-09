@@ -12,11 +12,12 @@ app.use(cors(
   {
     origin:[
     "https://foodunity-42dce.firebaseapp.com",
-    "https://foodunity-42dce.web.app"
+    "https://foodunity-42dce.web.app",
+    "http://localhost:5173"
 
 
   ],
-  credentials:true
+  credentials:true,
   }
 ));
 app.use(cookieParser());
@@ -37,27 +38,27 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-const verifyToken=async(req,res,next)=>{
-  const token=req.cookies.token;
-  console.log(token);
-  if(!token){
-    res.status(401).send({error:'unauthorized user',
-    success:false,message:'unauthorized user'
-    });
-  }
-  jwt.verify(token,process.env.JWT_SECRET,(err,decoded)=>{
-    if(err){
-      console.log(err);
-      res.status(401).send({error:'unauthorized user',
-    success:false,message:'unauthorized user'
-    });
-    }
-    console.log('decoded',decoded);
-    req.user=decoded;
-    next();
-  })
+// const verifyToken=async(req,res,next)=>{
+//   const token=req.cookies.token;
+//   console.log(token);
+//   if(!token){
+//     return res.status(401).send({error:'unauthorized user',
+//     success:false,message:'unauthorized user'
+//     });
+//   }
+//   jwt.verify(token,process.env.JWT_SECRET,(err,decoded)=>{
+//     if(err){
+//       console.log(err);
+//       return res.status(401).send({error:'unauthorized user',
+//     success:false,message:'unauthorized user'
+//     });
+//     }
+//     console.log('decoded',decoded);
+//     req.user=decoded;
+//     next();
+//   })
   
-}
+// }
 
 async function run() {
   try {
@@ -85,23 +86,23 @@ async function run() {
 
     })
     // jwt (json web token setup)
-    app.post('/jwt',async(req,res)=>{
-      const user=req.body;
-      console.log(user);
-      const token=jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'1h'});
-      console.log(token);
-      // for checking token
-      // res.send({token});
-      res.cookie('token',
-      token,{httpOnly:true,secure:true,sameSite:'none'})
-      .send({success:true});
-    })
-    app.post('/logout',(req,res)=>{
-      const user=req.body;
-      console.log(user);
-      res.clearCookie('token',{maxAge:0})
-      .send({success:true});
-    })
+    // app.post('/jwt',async(req,res)=>{
+    //   const user=req.body;
+    //   console.log(user);
+    //   const token=jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'1h'});
+    //   console.log(token);
+    //   // for checking token
+    //   // res.send({token});
+    //   res.cookie('token',
+    //   token,{httpOnly:true,secure:true,sameSite:'none'})
+    //   .send({success:true});
+    // })
+    // app.post('/logout',(req,res)=>{
+    //   const user=req.body;
+    //   console.log(user);
+    //   res.clearCookie('token',{maxAge:0})
+    //   .send({success:true});
+    // })
     
 
 
@@ -117,7 +118,7 @@ async function run() {
       res.send(foods);
 
     })
-    app.get('/featured/:id',verifyToken,async(req,res)=>{
+    app.get('/featured/:id',async(req,res)=>{
      
       // console.log(req.params)
       const id=req.params.id;
@@ -127,7 +128,7 @@ async function run() {
     })
     app.patch('/featured/:id',async(req,res)=>{
       const id=req.params.id;
-      
+      console.log(id);
       const food=req.body;
       console.log('updating food',id,food);
       const query={_id:new ObjectId(id)};
@@ -145,7 +146,7 @@ async function run() {
       console.log(result);
       res.json(result);
     })
-    app.post('/requestfood',verifyToken,async(req,res)=>{
+    app.post('/requestfood',async(req,res)=>{
       const food=req.body;
       console.log('adding new food',food);
       const result=await requestFood.insertOne(food);
@@ -157,7 +158,7 @@ async function run() {
       const id=req.params.id;
       const query={_id:new ObjectId(id)};
       const result=await featuredFood.deleteOne(query);
-      console.log(result);
+      console.log(result); 
       res.json(result);
     })
     app.get('/requestfood',async(req,res)=>{
