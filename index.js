@@ -10,7 +10,12 @@ const cookieParser=require ('cookie-parser');
 
 app.use(cors(
   {
-    origin:['http://localhost:5173'],
+    origin:[
+    "https://foodunity-42dce.firebaseapp.com",
+    "https://foodunity-42dce.web.app"
+
+
+  ],
   credentials:true
   }
 ));
@@ -57,7 +62,7 @@ const verifyToken=async(req,res,next)=>{
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
 
@@ -140,7 +145,7 @@ async function run() {
       console.log(result);
       res.json(result);
     })
-    app.post('/requestfood',async(req,res)=>{
+    app.post('/requestfood',verifyToken,async(req,res)=>{
       const food=req.body;
       console.log('adding new food',food);
       const result=await requestFood.insertOne(food);
@@ -155,9 +160,9 @@ async function run() {
       console.log(result);
       res.json(result);
     })
-    app.get('/requestfood',verifyToken,async(req,res)=>{
-      console.log(req.user);
-      // console.log(req.query);
+    app.get('/requestfood',async(req,res)=>{
+      // console.log(req.user,"from requestfood");
+      // console.log(req.body,"from requestfood");
       console.log(req.query.donorName);
       let query={};
       if(req.query?.donorName){
